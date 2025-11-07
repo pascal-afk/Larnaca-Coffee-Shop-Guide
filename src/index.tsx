@@ -309,7 +309,72 @@ app.get('/', (c) => {
             .card-hover { transition: all 0.3s ease; }
             .card-hover:hover { transform: translateY(-4px); box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
             .rating-star { color: #FF6F00; }
-            #map { height: 500px; width: 100%; border-radius: 12px; }
+            #mapContainer { height: 500px; width: 100%; border-radius: 12px; }
+            
+            /* Trading Card Styles */
+            .trading-card {
+                min-width: 320px;
+                max-width: 320px;
+                height: 480px;
+                background: white;
+                border-radius: 20px;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+                transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                cursor: pointer;
+                position: relative;
+                scroll-snap-align: center;
+            }
+            
+            .trading-card:hover {
+                transform: translateY(-12px) scale(1.02);
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+            }
+            
+            .trading-card-image {
+                width: 100%;
+                height: 280px;
+                object-fit: cover;
+                position: relative;
+            }
+            
+            .trading-card-rank {
+                position: absolute;
+                top: 16px;
+                left: 16px;
+                background: linear-gradient(135deg, #FF6F00 0%, #FF8F00 100%);
+                color: white;
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                font-weight: bold;
+                box-shadow: 0 4px 12px rgba(255, 111, 0, 0.4);
+            }
+            
+            .trading-card-badge {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 6px 12px;
+                border-radius: 20px;
+                font-size: 12px;
+                font-weight: 600;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+            
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
         </style>
     </head>
     <body class="bg-gray-50">
@@ -389,6 +454,31 @@ app.get('/', (c) => {
                         <i class="fas fa-coffee text-3xl text-orange-600 mb-2"></i>
                         <p class="font-semibold text-gray-700">Specialty Focus</p>
                     </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top 10 Trading Cards Section -->
+        <section class="py-16 bg-gradient-to-b from-white to-gray-50">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="text-center mb-12">
+                    <h2 class="text-4xl font-bold text-gray-900 mb-2">Top 10 Coffee Spots</h2>
+                    <p class="text-xl text-gray-600">Scroll through Larnaca's finest coffee experiences</p>
+                </div>
+                
+                <div class="relative">
+                    <!-- Scroll Container -->
+                    <div id="top10Container" class="flex gap-6 overflow-x-auto pb-6 snap-x snap-mandatory scrollbar-hide" style="scroll-behavior: smooth;">
+                        <!-- Cards will be loaded here via JavaScript -->
+                    </div>
+                    
+                    <!-- Navigation Arrows -->
+                    <button onclick="scrollTop10('left')" class="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white shadow-xl rounded-full p-4 hover:bg-gray-100 z-10">
+                        <i class="fas fa-chevron-left text-2xl text-gray-800"></i>
+                    </button>
+                    <button onclick="scrollTop10('right')" class="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white shadow-xl rounded-full p-4 hover:bg-gray-100 z-10">
+                        <i class="fas fa-chevron-right text-2xl text-gray-800"></i>
+                    </button>
                 </div>
             </div>
         </section>
@@ -476,6 +566,7 @@ app.get('/', (c) => {
             window.addEventListener('DOMContentLoaded', async () => {
                 await loadCoffeeShops();
                 initializeMap();
+                renderTop10Cards();
             });
             
             // Load coffee shops
@@ -488,11 +579,82 @@ app.get('/', (c) => {
                     allShops = response.data.data;
                     
                     renderShops(allShops);
+                    renderTop10Cards();
                     updateMapMarkers(allShops);
                 } catch (error) {
                     console.error('Error loading shops:', error);
                     document.getElementById('shopsGrid').innerHTML = 
                         '<div class="col-span-full text-center text-red-600">Error loading coffee shops. Please try again.</div>';
+                }
+            }
+            
+            // Render Top 10 Trading Cards
+            function renderTop10Cards() {
+                const container = document.getElementById('top10Container');
+                if (!container || !allShops || allShops.length === 0) return;
+                
+                // Sort by rating and get top 10
+                const top10 = [...allShops]
+                    .sort((a, b) => (b.avg_rating || 0) - (a.avg_rating || 0))
+                    .slice(0, 10);
+                
+                const categoryColors = {
+                    specialty: { bg: 'bg-blue-500', text: 'Specialty' },
+                    traditional: { bg: 'bg-orange-500', text: 'Traditional' },
+                    modern: { bg: 'bg-green-500', text: 'Modern' },
+                    chain: { bg: 'bg-purple-500', text: 'Chain' }
+                };
+                
+                container.innerHTML = top10.map((shop, index) => {
+                    const images = JSON.parse(shop.images || '[]');
+                    const features = JSON.parse(shop.features || '[]');
+                    const category = categoryColors[shop.category] || { bg: 'bg-gray-500', text: shop.category };
+                    
+                    return \`
+                        <div class="trading-card" onclick="showShopDetails('\${shop.slug}')">
+                            <div class="relative">
+                                <img src="\${images[0] || 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=800'}" 
+                                     alt="\${shop.name}" class="trading-card-image">
+                                <div class="trading-card-rank">#\${index + 1}</div>
+                                <div class="trading-card-badge \${category.bg} text-white">\${category.text}</div>
+                            </div>
+                            
+                            <div class="p-5">
+                                <h3 class="text-xl font-bold text-gray-900 mb-2 line-clamp-1">\${shop.name}</h3>
+                                
+                                <div class="flex items-center mb-3">
+                                    <span class="text-2xl font-bold text-yellow-500">\${shop.avg_rating ? shop.avg_rating.toFixed(1) : 'N/A'}</span>
+                                    <i class="fas fa-star text-yellow-500 ml-2"></i>
+                                    <span class="text-gray-600 text-sm ml-2">(\${shop.total_reviews || 0})</span>
+                                </div>
+                                
+                                <p class="text-gray-600 text-sm mb-3 line-clamp-2">\${shop.description || ''}</p>
+                                
+                                <div class="flex items-center text-sm text-gray-500 mb-3">
+                                    <i class="fas fa-map-marker-alt mr-2"></i>
+                                    <span class="line-clamp-1">\${shop.address}</span>
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-2">
+                                    \${features.slice(0, 2).map(f => \`
+                                        <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">\${f}</span>
+                                    \`).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    \`;
+                }).join('');
+            }
+            
+            // Scroll Top 10 Cards
+            function scrollTop10(direction) {
+                const container = document.getElementById('top10Container');
+                const scrollAmount = 340; // Card width + gap
+                
+                if (direction === 'left') {
+                    container.scrollBy({ left: -scrollAmount, behavior: 'smooth' });
+                } else {
+                    container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
                 }
             }
             
