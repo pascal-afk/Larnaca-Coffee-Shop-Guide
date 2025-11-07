@@ -396,6 +396,21 @@ For questions or suggestions, please open an issue on GitHub.
 
 ## Recent Updates
 
+### Version 1.4.0 (2025-11-07) ⭐ NEW
+- ✅ **AI-Generated Coffee Shop Images**: Replaced generic stock photos with 16 custom AI-generated images
+- ✅ Each coffee shop has 2 realistic images tailored to their specific character and style
+- ✅ Images created with Flux Pro Ultra model for photorealistic quality
+- ✅ 100% legal and copyright-free (AI-generated content)
+- ✅ Images showcase:
+  - Paul's Coffee Roasters: Industrial specialty roasting atmosphere
+  - To Kafe Tis Chrysanthi's: Traditional Cypriot rustic charm
+  - Menta: Modern minimalist pour-over focus
+  - Mingle Cafe: Bright Instagram-worthy brunch aesthetic
+  - Lazaris: Warm bakery cafe ambiance
+  - Coffee Island: Clean modern chain design
+  - Edem's Yard: Bohemian garden outdoor setting
+  - Refuel: Colorful playful ice cream parlor
+
 ### Version 1.3.0 (2025-11-07)
 - ✅ **Wolt Deep Links Integration**: Order food delivery directly from coffee shop pages
 - ✅ Delivery badges and radius information
@@ -420,7 +435,8 @@ For questions or suggestions, please open an issue on GitHub.
 
 **Last Updated**: 2025-11-07
 **Status**: ✅ Live in Production
-**Version**: 1.3.0
+**Version**: 1.4.0
 **Deployment**: Cloudflare Pages + D1 Database
 **Custom Domain**: ✅ larnacacoffeeguide.com (Active)
-**Database Migrations**: 3 migrations applied (local + production)
+**Database Migrations**: 4 migrations applied (local + production)
+**AI-Generated Images**: 16 custom coffee shop photos (Flux Pro Ultra)
