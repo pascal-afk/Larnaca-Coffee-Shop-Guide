@@ -5,11 +5,15 @@
 - **Goal**: Comprehensive coffee shop discovery and booking platform for Larnaca, Cyprus
 - **Features**: 
   - Browse and discover coffee shops with ratings and reviews
-  - Interactive map with location markers
+  - Interactive map with location markers (focused on Larnaca city center)
   - Real-time table booking system (OpenTable-style)
+  - **Wolt food delivery integration** with deep links
+  - Multi-language support (English, German, Greek)
   - Google Reviews integration
   - Filter by category (Specialty, Traditional, Modern, Chain)
   - User reviews and ratings system
+  - Owner interviews section showcasing coffee shop proprietors
+  - "My Bookings" dashboard for reservation management
 
 ## URLs
 - **Production**: https://larnacacoffeeguide.com ⭐⭐⭐
@@ -27,6 +31,7 @@
 - Categories: specialty, traditional, modern, chain
 - Ratings aggregation (avg_rating, total_reviews)
 - Google integration (google_place_id, google_rating)
+- **Wolt integration** (wolt_url, has_delivery, delivery_radius_km)
 - Features (JSON): wifi, outdoor seating, parking, etc.
 - Opening hours (JSON)
 
@@ -47,6 +52,21 @@
 - Booking and review statistics
 - Verification status
 
+**Owner Interviews Table:**
+- Coffee shop owner profiles
+- Owner quotes and philosophy
+- Signature drinks and fun facts
+
+**Email Notifications Table:**
+- Booking confirmation tracking
+- Reminder notifications
+- Status updates
+
+**Shop Availability Table:**
+- Per-weekday operating hours
+- Special closure dates
+- Capacity management
+
 **Favorites Table:**
 - User's favorite coffee shops
 - Quick access to preferred locations
@@ -63,12 +83,15 @@
    - Category filters (Specialty, Traditional, Modern, Chain)
    - Sort by name, rating, or review count
    - Real-time search functionality
+   - **Top 10 Trading Cards** with horizontally scrollable carousel
 
 2. **Interactive Map**
    - Leaflet.js integration
+   - **Focused on Larnaca city center** (Lazarus Church ±1km radius)
+   - Lazarus Church reference point marker
    - Color-coded pins by category
    - Popup information on markers
-   - Zoom and pan controls
+   - Zoom restrictions and boundary limits
 
 3. **Booking System**
    - Real-time availability checking
@@ -76,30 +99,53 @@
    - Party size selection (1-8 people)
    - Instant confirmation with unique codes
    - Guest booking (no registration required)
+   - **"My Bookings" dashboard** with email-based lookup
+   - View upcoming and past bookings
+   - Cancel bookings functionality
 
-4. **Rating & Review System**
+4. **Wolt Food Delivery Integration** ⭐ NEW
+   - Deep links to Wolt restaurant pages
+   - Delivery availability badges
+   - Blue Wolt branding with shield icons
+   - Delivery radius information (default 3km)
+   - Integrated in coffee shop cards, Top 10 cards, and details pages
+
+5. **Multi-Language Support** (i18n) ⭐
+   - English, German, Greek language options
+   - Language switcher in header
+   - LocalStorage preference persistence
+   - Complete translation coverage for all UI elements
+
+6. **Owner Interviews Section** ⭐
+   - Showcase coffee shop proprietors
+   - Owner quotes and philosophy
+   - Signature drinks and fun facts
+   - Professional presentation with photos
+
+7. **Rating & Review System**
    - 5-star rating system
    - Written reviews with timestamps
    - Verified visit badges
    - Google Reviews integration
 
-5. **Database & API**
+8. **Database & API**
    - RESTful API with Hono
-   - D1 database with migrations
+   - D1 database with 3 migrations applied
    - Seed data with 8 real Larnaca coffee shops
-   - Sample bookings and reviews
+   - Owner interviews data
+   - Wolt URLs and delivery info
 
 ### 🔄 Features Not Yet Implemented
 1. User authentication (Sign In/Sign Up)
 2. User profile management
-3. Booking management (view/cancel bookings)
-4. Review photos upload
-5. Email notifications for bookings
-6. Admin panel for shop owners
-7. Advanced filtering (price range, amenities)
-8. Mobile app version
-9. Social media sharing
-10. Loyalty program
+3. Review photos upload
+4. **Email notifications for bookings** (Resend integration planned)
+5. Admin panel for shop owners
+6. Advanced filtering (price range, amenities)
+7. Mobile app version (PWA planned)
+8. Social media sharing
+9. Loyalty program
+10. Remaining 4 owner interviews (4/8 completed)
 
 ## Tech Stack
 
@@ -188,6 +234,7 @@ npm run db:console:prod
 
 ### Coffee Shops
 - `GET /api/shops` - Get all coffee shops (supports ?category= and ?sort=)
+  - Returns: id, name, slug, address, coordinates, avg_rating, total_reviews, category, features, images, **wolt_url, has_delivery, delivery_radius_km**
 - `GET /api/shops/:slug` - Get single coffee shop with reviews
 
 ### Bookings
@@ -195,10 +242,14 @@ npm run db:console:prod
 - `POST /api/bookings` - Create new booking
 - `GET /api/bookings/:confirmationCode` - Get booking details
 - `DELETE /api/bookings/:confirmationCode` - Cancel booking
+- `GET /api/user/bookings?email=xxx` - Get all bookings for a user (email-based lookup)
 
 ### Reviews
 - `GET /api/reviews/:shopId` - Get reviews for a shop
 - `POST /api/reviews` - Create new review
+
+### Owner Interviews
+- `GET /api/interviews` - Get all owner interviews with coffee shop details
 
 ## Deployment
 
@@ -311,16 +362,22 @@ npm run db:migrate:prod
 ```
 webapp/
 ├── src/
-│   └── index.tsx          # Main Hono application + API routes
+│   └── index.tsx                      # Main Hono application + API routes (900+ lines)
 ├── migrations/
-│   └── 0001_initial_schema.sql  # Database schema
-├── public/                # Static assets (future)
-├── dist/                  # Build output
-├── ecosystem.config.cjs   # PM2 configuration
-├── seed.sql               # Sample data
-├── wrangler.jsonc         # Cloudflare configuration
-├── package.json           # Dependencies and scripts
-└── README.md              # This file
+│   ├── 0001_initial_schema.sql        # Initial database schema
+│   ├── 0002_interviews_and_bookings_enhancement.sql  # Owner interviews & booking enhancements
+│   └── 0003_add_wolt_links.sql        # Wolt integration columns
+├── public/
+│   └── static/
+│       └── translations.js            # Multi-language translations (EN/DE/EL)
+├── dist/                              # Build output
+├── ecosystem.config.cjs               # PM2 configuration
+├── seed.sql                           # Coffee shops data
+├── seed_interviews.sql                # Owner interviews data
+├── seed_wolt.sql                      # Wolt URLs and delivery info
+├── wrangler.jsonc                     # Cloudflare configuration
+├── package.json                       # Dependencies and scripts
+└── README.md                          # This file
 ```
 
 ## Contributing
@@ -337,8 +394,33 @@ For questions or suggestions, please open an issue on GitHub.
 
 ---
 
+## Recent Updates
+
+### Version 1.3.0 (2025-11-07)
+- ✅ **Wolt Deep Links Integration**: Order food delivery directly from coffee shop pages
+- ✅ Delivery badges and radius information
+- ✅ Blue Wolt branding with shield icons
+- ✅ Integration across coffee shop cards, Top 10 carousel, and details pages
+
+### Version 1.2.0 (2025-11-07)
+- ✅ **Multi-Language Support**: English, German, Greek with language switcher
+- ✅ LocalStorage language preference persistence
+- ✅ Complete translation coverage for all UI elements
+
+### Version 1.1.0 (2025-11-07)
+- ✅ **Owner Interviews Section**: Showcase coffee shop proprietors
+- ✅ **"My Bookings" Dashboard**: Email-based booking lookup and management
+- ✅ **Map Optimization**: Focused on Larnaca city center (±1km radius)
+- ✅ Lazarus Church reference point marker
+
+### Version 1.0.0 (2025-11-07)
+- ✅ Initial release with coffee shop discovery, booking system, and reviews
+
+---
+
 **Last Updated**: 2025-11-07
 **Status**: ✅ Live in Production
-**Version**: 1.0.0
+**Version**: 1.3.0
 **Deployment**: Cloudflare Pages + D1 Database
 **Custom Domain**: ✅ larnacacoffeeguide.com (Active)
+**Database Migrations**: 3 migrations applied (local + production)
