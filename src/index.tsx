@@ -423,7 +423,24 @@ app.get('/', (c) => {
                 -ms-overflow-style: none;
                 scrollbar-width: none;
             }
+            
+            /* Language Switcher */
+            .lang-btn {
+                font-size: 14px;
+                color: #6B7280;
+            }
+            
+            .lang-btn.active {
+                background-color: #FF6F00;
+                color: white;
+            }
+            
+            .lang-btn:hover:not(.active) {
+                background-color: #F3F4F6;
+            }
         </style>
+        
+        <script src="/static/translations.js"></script>
     </head>
     <body class="bg-gray-50">
         <!-- Header -->
@@ -434,13 +451,20 @@ app.get('/', (c) => {
                         <i class="fas fa-mug-hot text-3xl" style="color: #3E2723"></i>
                         <h1 class="text-2xl font-bold" style="color: #3E2723">Larnaca Coffee Guide</h1>
                     </div>
-                    <nav class="hidden md:flex space-x-6">
-                        <a href="#discover" class="text-gray-700 hover:text-orange-600 font-medium">Discover</a>
-                        <a href="#map" class="text-gray-700 hover:text-orange-600 font-medium">Map</a>
-                        <a href="/my-bookings" class="text-gray-700 hover:text-orange-600 font-medium">My Bookings</a>
+                    <nav class="hidden md:flex space-x-6 items-center">
+                        <a href="#discover" class="text-gray-700 hover:text-orange-600 font-medium" data-i18n="nav.discover">Discover</a>
+                        <a href="#map" class="text-gray-700 hover:text-orange-600 font-medium" data-i18n="nav.map">Map</a>
+                        <a href="/my-bookings" class="text-gray-700 hover:text-orange-600 font-medium" data-i18n="nav.myBookings">My Bookings</a>
+                        
+                        <!-- Language Switcher -->
+                        <div class="flex gap-2 ml-4 border-l pl-4">
+                            <button onclick="setLanguage('en')" class="lang-btn px-3 py-1 rounded-lg hover:bg-gray-100 font-semibold transition-colors" data-lang="en" title="English">EN</button>
+                            <button onclick="setLanguage('de')" class="lang-btn px-3 py-1 rounded-lg hover:bg-gray-100 font-semibold transition-colors" data-lang="de" title="Deutsch">DE</button>
+                            <button onclick="setLanguage('el')" class="lang-btn px-3 py-1 rounded-lg hover:bg-gray-100 font-semibold transition-colors" data-lang="el" title="Ελληνικά">ΕΛ</button>
+                        </div>
                     </nav>
                     <button class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
-                        <i class="fas fa-user mr-2"></i>Sign In
+                        <i class="fas fa-user mr-2"></i><span data-i18n="nav.signIn">Sign In</span>
                     </button>
                 </div>
             </div>
@@ -856,13 +880,35 @@ app.get('/', (c) => {
                 }).join('');
             }
             
-            // Initialize map
+            // Initialize map - Centered on Lazarus Church area
             function initializeMap() {
-                map = L.map('mapContainer').setView([34.9156, 33.6323], 14);
+                // Lazarus Church coordinates: 34.9156, 33.6323
+                map = L.map('mapContainer', {
+                    center: [34.9156, 33.6323],
+                    zoom: 15.5, // Closer zoom for city center
+                    minZoom: 14, // Prevent zooming out too far
+                    maxZoom: 18,
+                    maxBounds: [
+                        [34.9056, 33.6223], // Southwest corner (~1km)
+                        [34.9256, 33.6423]  // Northeast corner (~1km)
+                    ],
+                    maxBoundsViscosity: 1.0 // Prevent panning outside bounds
+                });
                 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                     attribution: '© OpenStreetMap contributors'
                 }).addTo(map);
+                
+                // Add Lazarus Church marker as reference point
+                const lazarusIcon = L.divIcon({
+                    html: '<div style="background-color: #8B5CF6; width: 32px; height: 32px; border-radius: 50%; border: 4px solid white; box-shadow: 0 4px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;"><i class="fas fa-church" style="color: white; font-size: 14px;"></i></div>',
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16]
+                });
+                
+                L.marker([34.9156, 33.6323], { icon: lazarusIcon })
+                    .addTo(map)
+                    .bindPopup('<div class="text-center"><strong>Lazarus Church</strong><br><span class="text-sm text-gray-600">Historic Landmark</span></div>');
             }
             
             // Update map markers
