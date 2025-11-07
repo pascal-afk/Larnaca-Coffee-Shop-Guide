@@ -15,7 +15,7 @@
 - **Local Development**: http://localhost:3000
 - **Public Demo**: https://3000-ixmtfhydx813rubg7j9bb-18e660f9.sandbox.novita.ai
 - **Production**: TBD (ready to deploy to Cloudflare Pages)
-- **GitHub**: TBD
+- **GitHub**: https://github.com/pascal-afk/Larnaca-Coffee-Shop-Guide
 
 ## Data Architecture
 
