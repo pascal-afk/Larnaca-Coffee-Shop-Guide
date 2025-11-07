@@ -12,9 +12,10 @@
   - User reviews and ratings system
 
 ## URLs
-- **Production**: https://larnaca-coffee-guide.pages.dev ⭐
+- **Production**: https://larnacacoffeeguide.com ⭐⭐⭐
+- **Alternate**: https://www.larnacacoffeeguide.com
+- **Cloudflare Pages**: https://larnaca-coffee-guide.pages.dev
 - **Local Development**: http://localhost:3000
-- **Sandbox Demo**: https://3000-ixmtfhydx813rubg7j9bb-18e660f9.sandbox.novita.ai
 - **GitHub**: https://github.com/pascal-afk/Larnaca-Coffee-Shop-Guide
 
 ## Data Architecture
@@ -340,3 +341,4 @@ For questions or suggestions, please open an issue on GitHub.
 **Status**: ✅ Live in Production
 **Version**: 1.0.0
 **Deployment**: Cloudflare Pages + D1 Database
+**Custom Domain**: ✅ larnacacoffeeguide.com (Active)
