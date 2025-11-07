@@ -740,25 +740,61 @@ app.get('/shop/:slug', async (c) => {
   const slug = c.req.param('slug')
   
   try {
-    const response = await fetch(\`\${new URL(c.req.url).origin}/api/shops/\${slug}\`)
-    const data = await response.json()
+    // Get shop from database directly
+    const shop = await c.env.DB.prepare(
+      'SELECT * FROM coffee_shops WHERE slug = ? AND is_active = 1'
+    ).bind(slug).first()
     
-    if (!data.success) {
+    if (!shop) {
       return c.html('<h1>Shop not found</h1>', 404)
     }
     
-    const shop = data.data
+    // Get reviews
+    const { results: reviews } = await c.env.DB.prepare(`
+      SELECT r.*, u.name as user_name, u.avatar_url
+      FROM reviews r
+      JOIN users u ON r.user_id = u.id
+      WHERE r.shop_id = ?
+      ORDER BY r.created_at DESC
+      LIMIT 10
+    `).bind(shop.id).all()
+    
     const images = JSON.parse(shop.images || '[]')
     const features = JSON.parse(shop.features || '[]')
     const hours = JSON.parse(shop.opening_hours || '{}')
     
-    return c.html(\`
+    const hoursHtml = Object.entries(hours).map(([day, time]) => 
+      `<div class="flex justify-between py-2 border-b">
+        <span class="font-semibold capitalize">${day}</span>
+        <span>${time}</span>
+      </div>`
+    ).join('')
+    
+    const reviewsHtml = reviews && reviews.length > 0 
+      ? reviews.map((review: any) => 
+          `<div class="border-b py-4">
+            <div class="flex items-center mb-2">
+              <span class="font-semibold">${review.user_name}</span>
+              <span class="ml-4 text-yellow-500">${'⭐'.repeat(review.rating)}</span>
+            </div>
+            ${review.title ? `<h3 class="font-semibold mb-1">${review.title}</h3>` : ''}
+            <p class="text-gray-700">${review.comment}</p>
+            <p class="text-sm text-gray-500 mt-2">${new Date(review.created_at).toLocaleDateString('de-DE')}</p>
+          </div>`
+        ).join('')
+      : '<p class="text-gray-600">Noch keine Bewertungen</p>'
+    
+    const featuresHtml = features.map((f: string) => 
+      `<span class="bg-gray-100 px-3 py-1 rounded-full text-sm">${f}</span>`
+    ).join('')
+    
+    return c.html(`
       <!DOCTYPE html>
       <html lang="de">
       <head>
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>\${shop.name} - Larnaca Coffee Guide</title>
+          <title>${shop.name} - Larnaca Coffee Guide</title>
           <script src="https://cdn.tailwindcss.com"></script>
           <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
       </head>
@@ -774,40 +810,25 @@ app.get('/shop/:slug', async (c) => {
           <main class="max-w-7xl mx-auto px-4 py-8">
               <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <div class="lg:col-span-2">
-                      <img src="\${images[0]}" alt="\${shop.name}" class="w-full h-96 object-cover rounded-lg shadow-lg mb-6">
+                      <img src="${images[0]}" alt="${shop.name}" class="w-full h-96 object-cover rounded-lg shadow-lg mb-6">
                       
-                      <h1 class="text-4xl font-bold mb-2">\${shop.name}</h1>
+                      <h1 class="text-4xl font-bold mb-2">${shop.name}</h1>
                       <div class="flex items-center mb-4">
-                          <span class="text-2xl font-semibold text-yellow-500">\${shop.avg_rating ? shop.avg_rating.toFixed(1) : 'N/A'}</span>
+                          <span class="text-2xl font-semibold text-yellow-500">${shop.avg_rating ? (shop.avg_rating as number).toFixed(1) : 'N/A'}</span>
                           <i class="fas fa-star text-yellow-500 ml-2"></i>
-                          <span class="text-gray-600 ml-2">(\${shop.total_reviews || 0} Bewertungen)</span>
+                          <span class="text-gray-600 ml-2">(${shop.total_reviews || 0} Bewertungen)</span>
                       </div>
                       
-                      <p class="text-lg text-gray-700 mb-6">\${shop.description}</p>
+                      <p class="text-lg text-gray-700 mb-6">${shop.description}</p>
                       
                       <div class="bg-white p-6 rounded-lg shadow-md mb-6">
                           <h2 class="text-2xl font-bold mb-4">Öffnungszeiten</h2>
-                          \${Object.entries(hours).map(([day, time]) => \`
-                              <div class="flex justify-between py-2 border-b">
-                                  <span class="font-semibold capitalize">\${day}</span>
-                                  <span>\${time}</span>
-                              </div>
-                          \`).join('')}
+                          ${hoursHtml}
                       </div>
                       
                       <div class="bg-white p-6 rounded-lg shadow-md">
                           <h2 class="text-2xl font-bold mb-4">Bewertungen</h2>
-                          \${shop.reviews && shop.reviews.length > 0 ? shop.reviews.map(review => \`
-                              <div class="border-b py-4">
-                                  <div class="flex items-center mb-2">
-                                      <span class="font-semibold">\${review.user_name}</span>
-                                      <span class="ml-4 text-yellow-500">\${'⭐'.repeat(review.rating)}</span>
-                                  </div>
-                                  \${review.title ? \`<h3 class="font-semibold mb-1">\${review.title}</h3>\` : ''}
-                                  <p class="text-gray-700">\${review.comment}</p>
-                                  <p class="text-sm text-gray-500 mt-2">\${new Date(review.created_at).toLocaleDateString('de-DE')}</p>
-                              </div>
-                          \`).join('') : '<p class="text-gray-600">Noch keine Bewertungen</p>'}
+                          ${reviewsHtml}
                       </div>
                   </div>
                   
@@ -820,20 +841,20 @@ app.get('/shop/:slug', async (c) => {
                           
                           <div class="mb-4">
                               <h3 class="font-semibold mb-2"><i class="fas fa-map-marker-alt mr-2"></i>Adresse</h3>
-                              <p class="text-gray-700">\${shop.address}</p>
+                              <p class="text-gray-700">${shop.address}</p>
                           </div>
                           
-                          \${shop.phone ? \`
+                          ${shop.phone ? `
                               <div class="mb-4">
                                   <h3 class="font-semibold mb-2"><i class="fas fa-phone mr-2"></i>Telefon</h3>
-                                  <p class="text-gray-700">\${shop.phone}</p>
+                                  <p class="text-gray-700">${shop.phone}</p>
                               </div>
-                          \` : ''}
+                          ` : ''}
                           
                           <div class="mb-4">
                               <h3 class="font-semibold mb-2"><i class="fas fa-tag mr-2"></i>Features</h3>
                               <div class="flex flex-wrap gap-2">
-                                  \${features.map(f => \`<span class="bg-gray-100 px-3 py-1 rounded-full text-sm">\${f}</span>\`).join('')}
+                                  ${featuresHtml}
                               </div>
                           </div>
                       </div>
@@ -848,7 +869,7 @@ app.get('/shop/:slug', async (c) => {
           </script>
       </body>
       </html>
-    \`)
+    `)
   } catch (error) {
     return c.html('<h1>Error loading shop details</h1>', 500)
   }
