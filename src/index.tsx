@@ -807,10 +807,26 @@ app.get('/', (c) => {
                                     <span class="line-clamp-1">\${shop.address}</span>
                                 </div>
                                 
-                                <div class="flex flex-wrap gap-2">
+                                <div class="flex flex-wrap gap-2 mb-3">
                                     \${features.slice(0, 2).map(f => \`
                                         <span class="text-xs bg-gray-100 px-2 py-1 rounded-full">\${f}</span>
                                     \`).join('')}
+                                    \${shop.has_delivery ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full"><i class="fas fa-shipping-fast mr-1"></i>Delivery</span>' : ''}
+                                </div>
+                                
+                                <div class="flex gap-2">
+                                    <button onclick="event.stopPropagation(); window.location.href='/shop/\${shop.slug}#booking'" 
+                                            class="flex-1 bg-orange-600 hover:bg-orange-700 text-white py-2 px-3 rounded-lg font-semibold text-sm">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </button>
+                                    \${shop.wolt_url ? \`
+                                        <a href="\${shop.wolt_url}" target="_blank" onclick="event.stopPropagation()"
+                                           class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-3 rounded-lg font-semibold text-sm flex items-center justify-center">
+                                            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+                                            </svg>
+                                        </a>
+                                    \` : ''}
                                 </div>
                             </div>
                         </div>
@@ -869,11 +885,23 @@ app.get('/', (c) => {
                                 </div>
                                 <div class="flex flex-wrap gap-2 mb-4">
                                     \${features.slice(0, 3).map(f => \`<span class="text-xs bg-gray-100 px-2 py-1 rounded">\${f}</span>\`).join('')}
+                                    \${shop.has_delivery ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded"><i class="fas fa-shipping-fast mr-1"></i>Delivery</span>' : ''}
                                 </div>
-                                <button onclick="event.stopPropagation(); openBookingModal('\${shop.id}', '\${shop.name}')" 
-                                        class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-semibold">
-                                    <i class="fas fa-calendar-check mr-2"></i>Book Now
-                                </button>
+                                <div class="space-y-2">
+                                    <button onclick="event.stopPropagation(); openBookingModal('\${shop.id}', '\${shop.name}')" 
+                                            class="w-full bg-orange-600 hover:bg-orange-700 text-white py-2 px-4 rounded-lg font-semibold">
+                                        <i class="fas fa-calendar-check mr-2"></i>Book Now
+                                    </button>
+                                    \${shop.wolt_url ? \`
+                                        <a href="\${shop.wolt_url}" target="_blank" onclick="event.stopPropagation()"
+                                           class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold flex items-center justify-center">
+                                            <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+                                            </svg>
+                                            Order on Wolt
+                                        </a>
+                                    \` : ''}
+                                </div>
                             </div>
                         </div>
                     \`;
@@ -1398,10 +1426,24 @@ app.get('/shop/:slug', async (c) => {
                   
                   <div class="lg:col-span-1">
                       <div class="bg-white p-6 rounded-lg shadow-lg sticky top-4">
-                          <h2 class="text-2xl font-bold mb-4">Buchung</h2>
-                          <button onclick="openBooking()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-semibold mb-4">
+                          <h2 class="text-2xl font-bold mb-4">Buchung & Lieferung</h2>
+                          <button onclick="openBooking()" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-4 rounded-lg font-semibold mb-3">
                               <i class="fas fa-calendar-check mr-2"></i>Tisch reservieren
                           </button>
+                          
+                          ${shop.wolt_url ? `
+                              <a href="${shop.wolt_url}" target="_blank" 
+                                 class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-semibold mb-4 flex items-center justify-center">
+                                  <svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/>
+                                  </svg>
+                                  Über Wolt bestellen
+                              </a>
+                              <p class="text-xs text-gray-500 text-center mb-4">
+                                  <i class="fas fa-shipping-fast mr-1"></i>
+                                  Lieferung im Umkreis von ${shop.delivery_radius_km || 3}km
+                              </p>
+                          ` : ''}
                           
                           <div class="mb-4">
                               <h3 class="font-semibold mb-2"><i class="fas fa-map-marker-alt mr-2"></i>Adresse</h3>
