@@ -13,7 +13,8 @@
 
 ## URLs
 - **Local Development**: http://localhost:3000
-- **Production**: TBD (will be deployed to Cloudflare Pages)
+- **Public Demo**: https://3000-ixmtfhydx813rubg7j9bb-18e660f9.sandbox.novita.ai
+- **Production**: TBD (ready to deploy to Cloudflare Pages)
 - **GitHub**: TBD
 
 ## Data Architecture
