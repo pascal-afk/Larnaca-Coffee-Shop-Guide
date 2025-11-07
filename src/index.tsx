@@ -287,6 +287,54 @@ app.post('/api/reviews', async (c) => {
 })
 
 // ============================================
+// API ROUTES - User Dashboard
+// ============================================
+
+// Get user bookings by email
+app.get('/api/user/bookings', async (c) => {
+  try {
+    const { email } = c.req.query()
+    
+    if (!email) {
+      return c.json({ success: false, error: 'Email is required' }, 400)
+    }
+    
+    const { results: bookings } = await c.env.DB.prepare(`
+      SELECT b.*, s.name as shop_name, s.address, s.phone as shop_phone, s.slug
+      FROM bookings b
+      JOIN coffee_shops s ON b.shop_id = s.id
+      WHERE b.user_email = ?
+      ORDER BY b.booking_date DESC, b.booking_time DESC
+    `).bind(email).all()
+    
+    return c.json({ success: true, data: bookings })
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// ============================================
+// API ROUTES - Owner Interviews
+// ============================================
+
+// Get all published interviews
+app.get('/api/interviews', async (c) => {
+  try {
+    const { results: interviews } = await c.env.DB.prepare(`
+      SELECT i.*, s.name as shop_name, s.slug as shop_slug
+      FROM owner_interviews i
+      JOIN coffee_shops s ON i.shop_id = s.id
+      WHERE i.is_published = 1
+      ORDER BY i.display_order ASC
+    `).all()
+    
+    return c.json({ success: true, data: interviews })
+  } catch (error: any) {
+    return c.json({ success: false, error: error.message }, 500)
+  }
+})
+
+// ============================================
 // MAIN PAGE - HTML
 // ============================================
 
@@ -389,7 +437,7 @@ app.get('/', (c) => {
                     <nav class="hidden md:flex space-x-6">
                         <a href="#discover" class="text-gray-700 hover:text-orange-600 font-medium">Discover</a>
                         <a href="#map" class="text-gray-700 hover:text-orange-600 font-medium">Map</a>
-                        <a href="#bookings" class="text-gray-700 hover:text-orange-600 font-medium">My Bookings</a>
+                        <a href="/my-bookings" class="text-gray-700 hover:text-orange-600 font-medium">My Bookings</a>
                     </nav>
                     <button class="bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700">
                         <i class="fas fa-user mr-2"></i>Sign In
@@ -500,6 +548,106 @@ app.get('/', (c) => {
                     <div class="text-center py-12 col-span-full">
                         <i class="fas fa-spinner fa-spin text-4xl text-orange-600"></i>
                         <p class="mt-4 text-gray-600">Loading coffee shops...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Owner Interviews Section -->
+        <section class="py-20 bg-gradient-to-br from-amber-50 to-orange-50">
+            <div class="max-w-7xl mx-auto px-4">
+                <div class="text-center mb-16">
+                    <span class="text-orange-600 font-semibold text-sm uppercase tracking-wide">Behind the Beans</span>
+                    <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mt-2 mb-4">Meet the Coffee Makers</h2>
+                    <p class="text-xl text-gray-600 max-w-3xl mx-auto">Discover the stories, passion, and philosophy behind Larnaca's best coffee spots</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
+                    <!-- Interview 1: Paul's Coffee Roasters -->
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+                        <div class="relative h-64">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=800" alt="Paul - Owner" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                                <h3 class="text-2xl font-bold text-white">Paul Georgiou</h3>
+                                <p class="text-orange-300 font-semibold">Owner, Paul's Coffee Roasters</p>
+                            </div>
+                        </div>
+                        <div class="p-8">
+                            <div class="mb-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i class="fas fa-quote-left text-orange-600 text-2xl"></i>
+                                    <span class="font-semibold text-gray-900">Why specialty coffee?</span>
+                                </div>
+                                <p class="text-gray-700 italic">"For me, coffee is more than a drink—it's a craft. Every bean tells a story of its origin, and I want our customers to taste that journey in every cup. We roast in-house because freshness makes all the difference."</p>
+                            </div>
+                            <div class="mb-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i class="fas fa-coffee text-orange-600 text-xl"></i>
+                                    <span class="font-semibold text-gray-900">Signature Drink</span>
+                                </div>
+                                <p class="text-gray-700">Ethiopian Single-Origin Pour-Over - Fruity, floral, and unforgettable</p>
+                            </div>
+                            <div class="mb-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i class="fas fa-heart text-orange-600 text-xl"></i>
+                                    <span class="font-semibold text-gray-900">Coffee Philosophy</span>
+                                </div>
+                                <p class="text-gray-700">"Quality over quantity. Every cup we serve must meet our high standards."</p>
+                            </div>
+                            <button onclick="showShopDetails('pauls-coffee-roasters')" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                                Visit Paul's Coffee Roasters
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Interview 2: To Kafe Tis Chrysanthi's -->
+                    <div class="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+                        <div class="relative h-64">
+                            <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800" alt="Chrysanthi - Owner" class="w-full h-full object-cover">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-6">
+                                <h3 class="text-2xl font-bold text-white">Chrysanthi Papadopoulos</h3>
+                                <p class="text-orange-300 font-semibold">Owner, To Kafe Tis Chrysanthi's</p>
+                            </div>
+                        </div>
+                        <div class="p-8">
+                            <div class="mb-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i class="fas fa-quote-left text-orange-600 text-2xl"></i>
+                                    <span class="font-semibold text-gray-900">Traditional Cypriot Coffee</span>
+                                </div>
+                                <p class="text-gray-700 italic">"We've been serving traditional Cypriot coffee for three generations. My grandmother taught me that coffee is about community—bringing people together, sharing stories, and creating memories."</p>
+                            </div>
+                            <div class="mb-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i class="fas fa-cookie-bite text-orange-600 text-xl"></i>
+                                    <span class="font-semibold text-gray-900">Must-Try</span>
+                                </div>
+                                <p class="text-gray-700">Traditional Cypriot Coffee with homemade Loukoumades (honey donuts)</p>
+                            </div>
+                            <div class="mb-6">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <i class="fas fa-users text-orange-600 text-xl"></i>
+                                    <span class="font-semibold text-gray-900">What Makes Us Special</span>
+                                </div>
+                                <p class="text-gray-700">"Our rustic atmosphere and authentic recipes passed down through generations."</p>
+                            </div>
+                            <button onclick="showShopDetails('to-kafe-tis-chrysanthis')" class="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-lg font-semibold transition-colors">
+                                Visit To Kafe Tis Chrysanthi's
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- More Interviews Coming Soon -->
+                <div class="text-center bg-white rounded-2xl shadow-lg p-12">
+                    <i class="fas fa-microphone-alt text-5xl text-orange-600 mb-4"></i>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-4">More Stories Coming Soon</h3>
+                    <p class="text-gray-600 mb-6">We're interviewing more coffee shop owners to bring you their unique stories and perspectives on Larnaca's coffee culture.</p>
+                    <div class="flex flex-wrap justify-center gap-4">
+                        <span class="bg-gray-100 px-4 py-2 rounded-full text-sm font-semibold text-gray-700">Menta Specialty</span>
+                        <span class="bg-gray-100 px-4 py-2 rounded-full text-sm font-semibold text-gray-700">Mingle Cafe</span>
+                        <span class="bg-gray-100 px-4 py-2 rounded-full text-sm font-semibold text-gray-700">Lazaris Bakery</span>
+                        <span class="bg-gray-100 px-4 py-2 rounded-full text-sm font-semibold text-gray-700">Edem's Yard</span>
                     </div>
                 </div>
             </div>
@@ -891,6 +1039,214 @@ app.get('/', (c) => {
                 renderShops(filtered);
                 updateMapMarkers(filtered);
             });
+        </script>
+    </body>
+    </html>
+  `)
+})
+
+// My Bookings page
+app.get('/my-bookings', (c) => {
+  return c.html(`
+    <!DOCTYPE html>
+    <html lang="de">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Meine Buchungen - Larnaca Coffee Guide</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    </head>
+    <body class="bg-gray-50">
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 py-4">
+                <div class="flex items-center justify-between">
+                    <a href="/" class="flex items-center space-x-2">
+                        <i class="fas fa-mug-hot text-3xl" style="color: #3E2723"></i>
+                        <h1 class="text-2xl font-bold" style="color: #3E2723">Larnaca Coffee Guide</h1>
+                    </a>
+                    <a href="/" class="text-orange-600 hover:text-orange-700">
+                        <i class="fas fa-arrow-left mr-2"></i>Zurück
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-5xl mx-auto px-4 py-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-8">Meine Buchungen</h1>
+            
+            <!-- Email Input -->
+            <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+                <label class="block text-gray-700 font-semibold mb-3">Email-Adresse eingeben:</label>
+                <div class="flex gap-3">
+                    <input type="email" id="userEmail" placeholder="ihre-email@beispiel.com" 
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none">
+                    <button onclick="loadUserBookings()" class="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold">
+                        <i class="fas fa-search mr-2"></i>Suchen
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bookings Container -->
+            <div id="bookingsContainer">
+                <div class="text-center py-12 text-gray-500">
+                    <i class="fas fa-calendar text-6xl mb-4"></i>
+                    <p class="text-lg">Geben Sie Ihre Email-Adresse ein, um Ihre Buchungen zu sehen</p>
+                </div>
+            </div>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+        <script>
+            async function loadUserBookings() {
+                const email = document.getElementById('userEmail').value.trim();
+                const container = document.getElementById('bookingsContainer');
+                
+                if (!email) {
+                    alert('Bitte geben Sie eine Email-Adresse ein');
+                    return;
+                }
+                
+                container.innerHTML = '<div class="text-center py-12"><i class="fas fa-spinner fa-spin text-4xl text-orange-600"></i></div>';
+                
+                try {
+                    const response = await axios.get(\`/api/user/bookings?email=\${encodeURIComponent(email)}\`);
+                    const bookings = response.data.data;
+                    
+                    if (bookings.length === 0) {
+                        container.innerHTML = \`
+                            <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+                                <i class="fas fa-inbox text-6xl text-gray-300 mb-4"></i>
+                                <h3 class="text-2xl font-bold text-gray-900 mb-2">Keine Buchungen gefunden</h3>
+                                <p class="text-gray-600 mb-6">Sie haben noch keine Reservierungen mit dieser Email-Adresse.</p>
+                                <a href="/" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg inline-block font-semibold">
+                                    Coffee Shop finden & buchen
+                                </a>
+                            </div>
+                        \`;
+                        return;
+                    }
+                    
+                    const now = new Date();
+                    const upcoming = bookings.filter(b => new Date(b.booking_date + ' ' + b.booking_time) >= now);
+                    const past = bookings.filter(b => new Date(b.booking_date + ' ' + b.booking_time) < now);
+                    
+                    container.innerHTML = \`
+                        <div class="mb-8">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Kommende Buchungen (\${upcoming.length})</h2>
+                            <div class="space-y-4">
+                                \${upcoming.length > 0 ? upcoming.map(booking => renderBookingCard(booking, false)).join('') : 
+                                  '<p class="text-gray-600 bg-white p-6 rounded-lg">Keine kommenden Buchungen</p>'}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Vergangene Buchungen (\${past.length})</h2>
+                            <div class="space-y-4">
+                                \${past.length > 0 ? past.map(booking => renderBookingCard(booking, true)).join('') : 
+                                  '<p class="text-gray-600 bg-white p-6 rounded-lg">Keine vergangenen Buchungen</p>'}
+                            </div>
+                        </div>
+                    \`;
+                } catch (error) {
+                    container.innerHTML = \`
+                        <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center">
+                            <i class="fas fa-exclamation-circle text-4xl text-red-600 mb-4"></i>
+                            <h3 class="text-xl font-bold text-red-900 mb-2">Fehler beim Laden</h3>
+                            <p class="text-red-700">Bitte versuchen Sie es erneut.</p>
+                        </div>
+                    \`;
+                }
+            }
+            
+            function renderBookingCard(booking, isPast) {
+                const statusColors = {
+                    confirmed: 'bg-green-100 text-green-800',
+                    pending: 'bg-yellow-100 text-yellow-800',
+                    cancelled: 'bg-red-100 text-red-800',
+                    completed: 'bg-gray-100 text-gray-800'
+                };
+                
+                const statusIcons = {
+                    confirmed: 'fa-check-circle',
+                    pending: 'fa-clock',
+                    cancelled: 'fa-times-circle',
+                    completed: 'fa-flag-checkered'
+                };
+                
+                return \`
+                    <div class="bg-white rounded-xl shadow-lg p-6 \${isPast ? 'opacity-75' : ''}">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 mb-1">\${booking.shop_name}</h3>
+                                <p class="text-gray-600 text-sm"><i class="fas fa-map-marker-alt mr-1"></i>\${booking.address}</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm font-semibold \${statusColors[booking.status]}">
+                                <i class="fas \${statusIcons[booking.status]} mr-1"></i>\${booking.status}
+                            </span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-gray-600 text-sm mb-1"><i class="fas fa-calendar mr-2"></i>Datum</p>
+                                <p class="font-semibold text-gray-900">\${new Date(booking.booking_date).toLocaleDateString('de-DE')}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm mb-1"><i class="fas fa-clock mr-2"></i>Zeit</p>
+                                <p class="font-semibold text-gray-900">\${booking.booking_time}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm mb-1"><i class="fas fa-users mr-2"></i>Personen</p>
+                                <p class="font-semibold text-gray-900">\${booking.party_size}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600 text-sm mb-1"><i class="fas fa-hashtag mr-2"></i>Code</p>
+                                <p class="font-semibold text-gray-900 font-mono text-sm">\${booking.confirmation_code}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-3">
+                            <a href="/shop/\${booking.slug}" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-4 rounded-lg font-semibold text-center">
+                                <i class="fas fa-info-circle mr-2"></i>Details
+                            </a>
+                            \${!isPast && booking.status !== 'cancelled' ? \`
+                                <button onclick="cancelBooking('\${booking.confirmation_code}')" 
+                                        class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg font-semibold">
+                                    <i class="fas fa-times mr-2"></i>Stornieren
+                                </button>
+                            \` : ''}
+                        </div>
+                        
+                        \${booking.special_requests ? \`
+                            <div class="mt-4 p-3 bg-gray-50 rounded-lg">
+                                <p class="text-sm text-gray-600"><strong>Besondere Wünsche:</strong> \${booking.special_requests}</p>
+                            </div>
+                        \` : ''}
+                    </div>
+                \`;
+            }
+            
+            async function cancelBooking(confirmationCode) {
+                if (!confirm('Möchten Sie diese Buchung wirklich stornieren?')) {
+                    return;
+                }
+                
+                try {
+                    await axios.delete(\`/api/bookings/\${confirmationCode}\`);
+                    alert('Buchung erfolgreich storniert!');
+                    loadUserBookings();
+                } catch (error) {
+                    alert('Fehler beim Stornieren. Bitte versuchen Sie es erneut.');
+                }
+            }
+            
+            // Auto-load if email in URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const emailParam = urlParams.get('email');
+            if (emailParam) {
+                document.getElementById('userEmail').value = emailParam;
+                loadUserBookings();
+            }
         </script>
     </body>
     </html>
